@@ -1,0 +1,6 @@
+Changes
+LinearCombination.pm
+MANIFEST
+Makefile.PL
+t/01load.t
+t/02func.t
