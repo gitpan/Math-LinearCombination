@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Carp;
 our ($VERSION);
-$VERSION = '0.02';
+$VERSION = '0.03';
 use fields (
    '_entries', # hash sorted on variable id's, with a ref to hash for
 	       # each variable-coefficient pair:
@@ -249,17 +249,193 @@ linear combinations of variables, i.e. expressions of the format
 
 with x1, x2, ..., xn variables, and a1, a2, ..., an numerical coefficients.
 Evaluation and manipulation of linear combinations is also supported.
+The numerical coefficients a_i and variables x_i are stored as pairs
+in an internal data structure and should not be manipulated directly.
+All access and manipulation should be performed through the methods.
 
-... STILL TO BE FINISHED
+It is important to note that no specific class is required for the
+variable objects. You can provide objects of any class, provided
+that the following methods are defined on those objects:
+
+=over 4
+
+=item name()
+
+returning a string with the variable name.
+
+=item id()
+
+returning a unique identifier for that variable. For most applications
+it will suffice to have id() invoke name().
+
+=item evaluate()
+
+returning a numerical evaluation of the variable.
+
+=back
+
+The Math::LinearCombination class was designed together with Math::SimpleVariable.
+The latter supports all the required methods, and it is thus logical to use only
+Math::SimpleVariable objects in your linear combinations, or brew your own class
+which is derived from Math::SimpleVariable.
+
+The following methods are available for Math::LinearCombination objects:
+
+=over 4
+
+=item $lc = new Math::SimpleVariable([$other_lc])
+
+constructs a new Math::SimpleVariable object. An existing Math::SimpleVariable object
+can be passed to it optionally, in which case a clone of that object is returned. (see
+also the clone() method).
+
+=item $lc = make Math::SimpleVariable($x1,$a1,$x2,$a2,...)
+
+also constructs a new Math::SimpleVariable object, but additionally initializes
+it with variable-coefficient pairs x_i, a_i. The number of arguments should thus
+be even, and the variable objects need to obey the requirements imposed on variables.
+
+=item $lc->clone()
+
+returns an exact copy of $lc, with none of the variables or coefficients shared.
+I.e. you can change the contents of the new (old) linear combination without any
+impact on the old (new) one.
+
+=item $lc->add_entry('var' => $x, 'coeff' => $a)
+
+adds the variable $x to the linear combination with $a as coefficient. 
+add_entry() throws an error when a variable with the same id() is already
+present in the linear combination. So do not use add_entry() for adding
+linear combinations, but use add_inplace() or the '+' operator (see below)
+instead.
+
+=item $ra_entries = $lc->get_entries()
+
+returns a ref to a hash with all the entries of the linear combination.
+The hash is sorted on the id() of the variables, and each entry is a ref
+to a hash with the following fields:
+
+=over 4
+
+=item var
+
+the variable object
+
+=item coeff
+
+the numerical coefficient
+
+=back
+
+=item @vars = $lc->get_variables()
+
+returns an array with all the variable objects in the linear combination.
+get_variables() is context aware, so you can invoke it as 
+
+  $ra_vars = $lc->get_variables
+
+to return a reference to the array of variables instead. The variables
+are sorted on their id().
+
+=item @coeffs = $lc->get_coefficients()
+
+same as get_variables(), but returns the coefficients instead. The coefficients
+are also sorted on the id() of the corresponding variables.
+
+=item $lc->add_inplace($lc2)
+
+mathematically adds the Math::LinearCombination object $lc2 to $lc and returns 
+the changed $lc.
+
+=item $sum = $lc->add($lc2)
+
+mathematically adds $lc2 to $lc. The result is stored in a newly created 
+Math::LinearCombination object. Both $lc and $lc2 are left in the same state as before.
+
+=item $lc->negate_inplace()
+
+inverts the sign of the coefficient for each variable in the linear combination.
+
+=item $diff = $lc->subtract($lc2)
+
+mathematically subtracts $lc2 from $lc. The results is stored in a newly created
+Math::LinearCombination object. Both $lc and $lc2 are left in the same state as before.
+
+=item $lc->multiply_with_constant_inplace($c)
+
+multiplies each coefficient in $lc with the numerical constant $c.
+
+=item $prod = $lc->mult($lc2)
+
+mathematically multiplies $lc with $lc2. The result is stored in a newly created
+Math::LinearCombination object. Both $lc and $lc2 are left in the same state as before.
+
+=item $quot = $lc->div($c)
+
+divides $lc by the numerical constant $c. The result is stored in a newly created
+Math::LinearCombination object. $lc is left in the same state as before.
+Note that it is not possible to divide a linear combination by another
+linear combination, as the result is generally not a linear combination.
+
+=item $eval = $lc->evaluate()
+
+evaluates the linear combination $lc numerically, using the values of the
+variables obtained by invoking evaluate() on them.
+
+=item $lc->remove_zeroes() 
+
+removes all variable-coefficient pairs with zero coefficients from the linear combination.
+This method is used internally in the methods above, so normally you should never need it.
+
+=item $lc->stringify()
+
+returns a string representing the linear combination. Returns '0.0' for empty linear combinations.
+
+=back
+
+In order to make the mathematical manipulation of linear combinations less verbose,
+a number of operators have been overloaded to use the methods above. The overloaded
+operators are:
+
+=over 4
+
+=item 
+
+'+' for adding two linear combinations;
+
+=item 
+
+'-' for subtracting two linear combinations;
+
+=item 
+
+'*' for multiplying two linear combinations;
+
+=item 
+
+'/' for dividing a linear combination by a number;
+
+=item 
+
+and '""' for stringifying a linear combination, i.e. you can use a linear combination objects
+in any place where interpolation of variables is possible and get the string representation.
+
+=back
 
 =head1 SEE ALSO
 
-perl(1).
+=over 4
+
+=item perl(1)
+
+=item L<Math::SimpleVariable>
+
+=back
 
 =head1 VERSION
 
-This is version $Revision: 1.10 $ of Math::LinearCombination,
-last edited at $Date: 2001/07/18 12:50:50 $.
+This is CVS $Revision: 1.11 $ of Math::LinearCombination,
+last edited at $Date: 2001/10/31 12:50:02 $.
 
 =head1 AUTHOR
 

@@ -8,7 +8,10 @@ WriteMakefile(
       'AUTHOR'    => 'Wim Verhaegen <wimv@cpan.org>',
     ) : (),
     'VERSION_FROM'	=> 'LinearCombination.pm', # finds $VERSION
-    'PREREQ_PM'		=> {Carp => undef}, 
+    'PREREQ_PM'		=> {
+	'Carp'                 => undef,
+	'Math::SimpleVariable' => '0.03',
+    }, 
     'dist'      => { 
 	CI        => 'cvs ci',
 	RCS_LABEL => 'cvs tag Math-LinearCombination-$(VERSION_SYM)' 
